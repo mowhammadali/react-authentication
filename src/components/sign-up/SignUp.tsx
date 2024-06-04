@@ -1,48 +1,20 @@
-import { TextField , Button } from '@mui/material';
-import styled from 'styled-components';
 import axios from 'axios';
-import { FormEvent, useState } from 'react';
+import { TextField , Button } from '@mui/material';
+import React, { FormEvent, useState } from 'react';
+import { NavLink } from 'react-router-dom';
+import { InputContainer , Form , SignUpButton , Link } from '../../styles/common/CommonStyles';
+import { UserFormTypes } from '../../types/common/CommonTypes';
+import { notify } from '../../helper/toastify/toastify';
 
-const Form = styled.form`
-    width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    border: 1px solid #d4d4d4;
-    border-radius: 12px;
-`
-
-const InputContainer = styled.section`
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-    margin-bottom: 40px;
-`
-
-const A = styled.button`
-    width: 100%;
-    background-color: #0ea5e9;
-
-    &:hover {
-        background-color: #0ea5e9;
-    }
-`
-
-type UserFormTypes  = {
-    name: string;
-    email: string;
-    password: string;
-}
-
-const SignUp = () => {
+const SignUp: React.FC = () => {
     const [userForm , setUserForm] = useState<UserFormTypes>({
         name: '',
         email: '',
         password: '',
     })
 
-    const singUp = async (e: FormEvent) => {
+    const register = async (e: FormEvent) => {
         e.preventDefault();
-
         
         if (!Object.values(userForm).includes('')) {
             const data = {
@@ -52,25 +24,42 @@ const SignUp = () => {
 
             try {
                 const response = await axios.post('https://api.escuelajs.co/api/v1/users/' , data);
-                console.log(response);
+                if ([200 , 201].includes(response.status)) loginAfterRegister(response.data)
             }
-            catch (error) {
-                console.log(error)
+            catch (error: any) {
+                notify(error.message);
             }
         }
     }
 
+    const loginAfterRegister = async (userData: {email: string , password: string}) => {
+        const data = {
+            email: userData.email,
+            password: userData.password,
+        }
+
+        try {
+            const response = await axios.post('https://api.escuelajs.co/api/v1/auth/login' , data);
+            console.log(response);
+        }
+        catch (error: any) {
+            notify(error.message);
+        }
+    }
+
     return (
-            <Form onSubmit={singUp}>
+            <Form onSubmit={register}>
+                <h2>Sign Up</h2>
                 <InputContainer>
-                    <TextField label="name" variant="outlined" size='small' type='text'
+                    <TextField label="name" variant="outlined" size='small' type='text' value={userForm.name}
                         onChange={event => setUserForm(prevUserForm => ({...prevUserForm , name: event.target.value}))}/>
-                    <TextField label="email" variant="outlined" size='small' type='text'
+                    <TextField label="email" variant="outlined" size='small' type='text' value={userForm.email}
                         onChange={event => setUserForm(prevUserForm => ({...prevUserForm , email: event.target.value}))}/>
-                    <TextField label="password" variant="outlined" size='small' type='password' 
+                    <TextField label="password" variant="outlined" size='small' type='password' value={userForm.password}
                         onChange={event => setUserForm(prevUserForm => ({...prevUserForm , password: event.target.value}))}/>
                 </InputContainer>  
-                <A as={Button} variant="contained" type='submit'>Contained</A>
+                <SignUpButton as={Button} variant="contained" type='submit'>Sign Up</SignUpButton>
+                <Link as={NavLink} to='/signin'>have account? let's signin</Link>
             </Form>
     )
 }
